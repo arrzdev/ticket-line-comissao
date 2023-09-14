@@ -4,6 +4,7 @@ import { QrReader } from 'react-qr-reader';
 import Toast from "../components/Toast";
 import { registerPayment, getPayments, getEventInfo, changeTicketsVisibility, validateTicket } from "../_broker";
 import type { EventInterface, PaymentInterface } from "../types";
+import { set } from "mongoose";
 
 const Host = () => {
   const [data, setData] = useState('No result');
@@ -23,6 +24,7 @@ const Host = () => {
   const [payments, setPayments] = useState([] as PaymentInterface[]);
   const [eventInfo, setEventInfo] = useState({} as EventInterface);
   const [loadingPage, setloadingPage] = useState(true);
+  const [qrOpen, setQrOpen] = useState(false);
 
   //fetch initial data
   useEffect(() =>{
@@ -48,15 +50,6 @@ const Host = () => {
     })();
   }, []);
 
-  //clean action feedback after 5 seconds
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setActionFeedback({status: ""});
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, [actionFeedback]);
-
   const addPayment = async () => {
     const result = await registerPayment(newPayment);
     setActionFeedback(result);
@@ -79,16 +72,34 @@ const Host = () => {
   const handleQReader = async (result: any, error: any) => {
     if (error){console.info(error);}
     if (result && result?.text) {
-      const validTicket = await validateTicket(result?.text);
-
-      if (validTicket.status != "success") {
-        setActionFeedback(validTicket);
+      //if result is not a mongo_id return
+      if (result?.text.length != 24) {
+        setActionFeedback({status: "warning", message: "O código lido não é um bilhete válido"});
         return;
       }
-      document.getElementById('qr_modal')?.close();
-      setActionFeedback({status: "success", message: `Bilhete validado com sucesso: ${result?.text}`});
+
+      const validTicket = await validateTicket(result?.text);
+      setActionFeedback(validTicket);
+
+      if (validTicket.status != "success") {
+        return;
+      }
+      
+      //if ticket is valid, close the modal
+      setQrOpen(false);
     }
   }
+
+  //handle modal based on qrOpen state
+  useEffect(() => {
+    if (qrOpen) {
+      // @ts-ignore
+      document.getElementById('qr_modal')?.showModal();
+    } else {
+      // @ts-ignore
+      document.getElementById('qr_modal')?.close();
+    }
+  }, [qrOpen])
 
   return (
     <div className="w-full max-w-screen min-h-screen bg-base-200 text-left p-8">
@@ -98,17 +109,18 @@ const Host = () => {
         <div className="modal-box h-min text-center">
           <h3 className="font-bold text-lg">Validar bilhete</h3>
             {/* show the qrreader component only ig the modal is open */}
-            {document.getElementById('qr_modal')?.open && (
+            {qrOpen && (
               <QrReader
-                constraints={{ facingMode: 'environment' }}
-                scanDelay={500}
-                onResult={(result, error) => handleQReader(result, error)}
-                style={{ width: '100%' }}
+              constraints={{ facingMode: 'environment' }}
+              scanDelay={500}
+              onResult={(result, error) => handleQReader(result, error)}
+              // @ts-ignore
+              style={{ width: '100%' }}
               />
             )}
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button>close</button>
+          <button onClick={() => setQrOpen(false)}>close</button>
         </form>
       </dialog>
         
@@ -133,8 +145,7 @@ const Host = () => {
                 Mostrar Bilhetes
               </>)}
           </button>
-          {/* Open the modal using document.getElementById('ID').showModal() method */}
-          <button className="btn btn-outline w-full" onClick={() => document.getElementById('qr_modal').showModal()}>
+          <button className="btn btn-outline w-full" onClick={() => {setQrOpen(true)}}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="gray" viewBox="0 0 448 512" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M0 80C0 53.5 21.5 32 48 32h96c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V80zM64 96v64h64V96H64zM0 336c0-26.5 21.5-48 48-48h96c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V336zm64 16v64h64V352H64zM304 32h96c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H304c-26.5 0-48-21.5-48-48V80c0-26.5 21.5-48 48-48zm80 64H320v64h64V96zM256 304c0-8.8 7.2-16 16-16h64c8.8 0 16 7.2 16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s7.2-16 16-16s16 7.2 16 16v96c0 8.8-7.2 16-16 16H368c-8.8 0-16-7.2-16-16s-7.2-16-16-16s-16 7.2-16 16v64c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V304zM368 480a16 16 0 1 1 0-32 16 16 0 1 1 0 32zm64 0a16 16 0 1 1 0-32 16 16 0 1 1 0 32z" /></svg>
             Ler Bilhete
           </button>

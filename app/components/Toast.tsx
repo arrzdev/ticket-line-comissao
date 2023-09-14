@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 const SuccessToast = (message: string) => (
   <div className="alert alert-success">
@@ -21,12 +21,33 @@ const ErrorToast = (message: string) => (
   </div>
 )
 
-const Toast = ({ actionFeedback }: { actionFeedback: { status: string, message?: string, data?: Object } }) => {
+const Toast = ({ actionFeedback }: { actionFeedback: { status: string, message?: string, data?: Object, redirect?: string, persist?: boolean } }) => {
+  const [actionFeedbackState, setActionFeedback] = useState(actionFeedback);
+  
+  //clean action feedback after 5 seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (actionFeedbackState?.persist) return;
+      setActionFeedback({ status: "" });
+      if (actionFeedbackState?.redirect){
+        window.location.href = actionFeedbackState.redirect;
+      }
+
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [actionFeedbackState]);
+
+  //when toast gets new props, update state
+  useEffect(() => {
+    setActionFeedback(actionFeedback);
+  }, [actionFeedback]);
+  
   return (
-    <div className="mb-10">
-      {actionFeedback.status === "success" && SuccessToast(actionFeedback.message || "")}
-      {actionFeedback.status === "warning" && WarningToast(actionFeedback.message || "")}
-      {actionFeedback.status === "error" && ErrorToast(actionFeedback.message || "")}
+    <div className="mb-8">
+      {actionFeedbackState.status === "success" && SuccessToast(actionFeedbackState.message || "")}
+      {actionFeedbackState.status === "warning" && WarningToast(actionFeedbackState.message || "")}
+      {actionFeedbackState.status === "error" && ErrorToast(actionFeedbackState.message || "")}
     </div>
   )
 }

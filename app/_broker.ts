@@ -155,9 +155,68 @@ export async function getEventInfo(){
   }
 }
 
-export async function getTickets({mbway_number, time}: {mbway_number: string, time: string}){
+export async function getTickets({payment_id}: {payment_id: string}){
   //create connection with database
   await connectDB();
+
+  //check if there is a payment with the given mbway_number and time
+  const payment = await Payment.findOne({_id: payment_id});
+
+  if (!payment){
+    return {
+      status: "error",
+      message: `Não foram encontrados bilhetes com o id de pagamento: ${payment_id}`,
+      redirect: "/"
+    }
+  }
+
+  //check if ticket were already delivered
+  const event = await Event.findOne();
+  if(!event){
+    return {
+      status: "error",
+      message: "Evento não encontrado",
+      redirect: "/"
+    }
+  }
+
+  console.log("event.tickets_delivered", event.tickets_delivered)
+  if(event.tickets_delivered === false){
+    return {
+      status: "warning",
+      message: "Os bilhetes ainda não foram entregues pelo host, volta mais tarde",
+      persist: true
+    }
+  }
+
+  //get tickets based on mbway_number and time
+  const tickets = await Ticket.find({mbway_number: payment.mbway_number});
+
+  if (!tickets){
+    return {
+      status: "error",
+      message: "Erro ao obter bilhetes",
+      persist: true
+    }
+  }
+
+  return {
+    status: "success",
+    data: await JSON.parse(JSON.stringify(tickets))
+  }
+}
+
+export async function getPayment({mbway_number, time}: {mbway_number: string, time: string}){
+  //create connection with database
+  await connectDB();
+
+  //verify parameters
+  if (!mbway_number || !time){
+    return {
+      status: "error",
+      message: "Introduza corretamente os dados de pagamento"
+    }
+  }
 
   //check if there is a payment with the given mbway_number and time
   const payment = await Payment.findOne({mbway_number, time});
@@ -165,23 +224,14 @@ export async function getTickets({mbway_number, time}: {mbway_number: string, ti
   if (!payment){
     return {
       status: "error",
-      message: "Os dados de pagamento não foram encontrados"
-    }
-  }
-
-  //get tickets based on mbway_number and time
-  const tickets = await Ticket.find({mbway_number});
-
-  if (!tickets){
-    return {
-      status: "error",
-      message: "Erro ao obter bilhetes"
+      message: "Não foi encontrado um pagamento com os dados fornecidos. Confirme os dados de pagamento ou aguarde que o host do evento valide o pagamento",
+      persist: true
     }
   }
 
   return {
     status: "success",
-    data: await JSON.parse(JSON.stringify(tickets))
+    data: await JSON.parse(JSON.stringify(payment))
   }
 }
 
@@ -222,7 +272,7 @@ export async function validateTicket(id: string){
   if(ticket.used){
     return {
       status: "warning",
-      message: "Bilhete já utilizado"
+      message: `Bilhete já utilizado: ${ticket._id}`
     }
   }
 
@@ -238,6 +288,6 @@ export async function validateTicket(id: string){
 
   return {
     status: "success",
-    message: "Bilhete validado com sucesso!"
+    message: `Bilhete validado com sucesso: ${id}`
   }
 }
