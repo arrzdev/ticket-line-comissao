@@ -59,7 +59,6 @@ const Host = () => {
   }
 
   const updateEventInfo = async () => {
-    console.log(eventInfo);
     const result = await updateEvent(eventInfo);
     setActionFeedback(result);
   }
@@ -154,6 +153,8 @@ const Host = () => {
               <span className="label-text">Preço do bilhete</span>
             </label>
             <input type="text" defaultValue={String(eventInfo.price)}  className="input input-bordered mb-4"
+            // @ts-ignore
+            // TOOD: fix this
               onChange={(e) => setEventInfo({ ...eventInfo, ...{price: e.target.value}})}/>
           </div>
           <button className="btn btn-outline w-full" onClick={() => updateEventInfo()}>

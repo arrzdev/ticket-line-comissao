@@ -16,7 +16,6 @@ import type { PaymentInterface, TicketInterface, EventInterface } from "./types"
 //revalidatePath will revalidate the path on the server and client so that we can abuse the cache
 
 export async function registerPayment({mbway_number, time, amount}: PaymentInterface){
-  console.log("registerPayment", mbway_number, time, amount)
   //validate parameters
   if (!mbway_number || !time || !amount){
     return {
@@ -181,7 +180,6 @@ export async function getTickets({payment_id}: {payment_id: string}){
     }
   }
 
-  console.log("event.tickets_delivered", event.tickets_delivered)
   if(event.tickets_delivered === false){
     return {
       status: "warning",

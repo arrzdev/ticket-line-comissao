@@ -9,8 +9,6 @@ export async function middleware(request: NextRequest) {
   const { url, nextUrl, cookies } = request;
   const { value: token } = cookies.get("t") ?? { value: null };
 
-  console.log("INSIDE MIDDLEWARE!")
-
   const hasVerifiedToken = token && (await verifyJwtToken(token));
   const isAuthPageRequested = isAuthPages(nextUrl.pathname);
 
