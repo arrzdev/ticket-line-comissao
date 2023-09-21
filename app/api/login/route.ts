@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  connectDB(); //connect db
+  await connectDB(); //connect db
 
   const host = await Host.findOne({
     username,
