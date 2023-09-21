@@ -59,7 +59,13 @@ const Host = () => {
   }
 
   const updateEventInfo = async () => {
-    const result = await updateEvent(eventInfo);
+    const eventUpdateParse = {
+      name: eventInfo.name,
+      date: eventInfo.date,
+      time: eventInfo.time,
+      price: String(eventInfo.price)
+    }
+    const result = await updateEvent(eventUpdateParse);
     setActionFeedback(result);
   }
 
