@@ -1,6 +1,7 @@
 "use server";
 
 import connectDB from "./lib/connect-db";
+
 import Payment from "./models/Payment"
 import Ticket from "./models/Ticket"
 import Event from "./models/Event"
@@ -289,5 +290,62 @@ export async function validateTicket(id: string){
   return {
     status: "success",
     message: `Bilhete validado com sucesso: ${id}`
+  }
+}
+
+export async function updateEvent({name, date, time, price}: {name:string, date:string, time:string, price:string}){
+  //create connection with database
+  await connectDB();
+
+  //validate parameters
+  if (!name || !date || !time || !price){
+    return {
+      status: "warning",
+      message: "Parâmetros em falta"
+    }
+  }
+
+  //validate date
+  const dateRegex = new RegExp("^(0[1-9]|[12][0-9]|3[01])[-](0[1-9]|1[012])[-](20[0-9][0-9])$");
+
+  if(!dateRegex.test(date)){
+    return {
+      status: "warning",
+      message: "Data inválida"
+    }
+  }
+
+  //validate time
+  const timeRegex = new RegExp("^([0-9]|0[0-9]|1[0-9]|2[0-3])?(:([0-5]|[0-5][0-9])?)?$");
+  if(!timeRegex.test(time)){
+    return {
+      status: "warning",
+      message: "Hora inválida"
+    }
+  }
+
+  //validate price
+  const nPrice = parseInt(price)
+  if(!nPrice){
+    return {
+      status: "warning",
+      message: "Preço inválido"
+    }
+  }
+
+  //update event
+  const event = await Event.findOneAndUpdate({}, {name, date, time, price: nPrice});
+
+  if (!event){
+    return {
+      status: "error",
+      message: "Erro ao atualizar evento"
+    }
+  }
+
+  return {
+    status: "success",
+    message: "Informações do evento atualizadas com sucesso",
+    data: event
   }
 }

@@ -4,7 +4,6 @@ const eventSchema = new mongoose.Schema({
   name: String,
   date: String, 
   time: String,
-  location: String,
   price: Number,
   tickets_delivered: Boolean, //true if guests have received their tickets
 });

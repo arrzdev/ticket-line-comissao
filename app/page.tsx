@@ -2,8 +2,12 @@
 import { useState } from "react";
 import { getPayment } from "./_broker";
 import Toast from "./components/Toast";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Home = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [userType, setUserType] = useState("guest")
   const [actionFeedback, setActionFeedback] = useState({
     status: "", message: ""
@@ -20,6 +24,7 @@ const Home = () => {
   })
 
   const handleLogin = async () => { 
+
     if (userType === "guest") {
       const payment = await getPayment(guestData);
 
@@ -28,7 +33,26 @@ const Home = () => {
         return;
       }
 
-      window.location.href = `/tickets/${payment.data._id}`;
+      router.push(`/tickets/${payment.data._id}` ?? "/");
+      router.refresh();
+    }
+
+    if (userType === "host") {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        body: JSON.stringify(hostData),
+      });
+      const parsedResponse = await res.json();
+
+      console.log(parsedResponse)
+
+      if (parsedResponse.status === "success") {
+        router.push("/host");
+        router.refresh();
+      } else {
+        // Make your shiny error handling with a great user experience
+        setActionFeedback(parsedResponse);
+      }
     }
   }
 
@@ -38,7 +62,7 @@ const Home = () => {
     <div className="flex items-center justify-center min-h-screen bg-base-200">
       <div className="flex-col lg:flex-row-reverse -mt-72">
         <div className="text-center">
-          <h1 className="text-5xl font-bold -mt-5">Ticket Line</h1>
+          <h1 className="text-5xl font-bold -mt-5">Bilheteira Online</h1>
           <p className="py-6"> - Insere os dados de pagamento abaixo - </p>
         </div>
         <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">

@@ -15,7 +15,6 @@ export interface EventInterface {
   name: string,
   date: string,
   time: string,
-  location: string,
   price: number,
   tickets_delivered: boolean
 }

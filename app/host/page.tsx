@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { QrReader } from 'react-qr-reader';
 import Toast from "../components/Toast";
-import { registerPayment, getPayments, getEventInfo, changeTicketsVisibility, validateTicket } from "../_broker";
+import { registerPayment, getPayments, getEventInfo, changeTicketsVisibility, validateTicket, updateEvent } from "../_broker";
 import type { EventInterface, PaymentInterface } from "../types";
 import { set } from "mongoose";
 
@@ -56,6 +56,12 @@ const Host = () => {
     if (result.status === "success") {
       setPayments([...payments, newPayment as PaymentInterface]);
     }
+  }
+
+  const updateEventInfo = async () => {
+    console.log(eventInfo);
+    const result = await updateEvent(eventInfo);
+    setActionFeedback(result);
   }
 
   const toggleTickets = async () => {
@@ -127,7 +133,35 @@ const Host = () => {
       <div className="space-y-16">
         {/* EVENT MANAGMENT SECTION */}
         <div className="space-y-2">
-        <h1 className="text-4xl font-bold pb-2">Gestão da bilheteira</h1>
+        <h1 className="text-4xl font-bold pb-2">Gestão do Evento</h1>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Nome do Evento</span>
+            </label>
+            <input defaultValue={eventInfo.name} className="input input-bordered"
+              onChange={(e) => setEventInfo({ ...eventInfo, ...{ name: e.target.value } })}/>
+            <label className="label">
+              <span className="label-text">Data do Evento</span>
+            </label>
+            <input type="text" maxLength={10} defaultValue={eventInfo.date} className="input input-bordered" 
+              onChange={(e) => setEventInfo({...eventInfo, ...{date: e.target.value}})}/>
+            <label className="label">
+              <span className="label-text">Hora do Evento</span>
+            </label>
+            <input type="text" maxLength={5} defaultValue={eventInfo.time} className="input input-bordered"
+              onChange={(e) => setEventInfo({ ...eventInfo, ...{time: e.target.value}})}/>
+            <label className="label">
+              <span className="label-text">Preço do bilhete</span>
+            </label>
+            <input type="text" defaultValue={String(eventInfo.price)}  className="input input-bordered mb-4"
+              onChange={(e) => setEventInfo({ ...eventInfo, ...{price: e.target.value}})}/>
+          </div>
+          <button className="btn btn-outline w-full" onClick={() => updateEventInfo()}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Atualizar Informações
+          </button>
           <button className="btn btn-outline w-full" onClick={() => toggleTickets()}>
             {eventInfo.tickets_delivered ? 
               (
